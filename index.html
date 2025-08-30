@@ -114,6 +114,11 @@
             background-color: #63b3ed;
             color: white;
         }
+        .number-btn[disabled] {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
         #message-box {
             background-color: #fff;
             padding: 1rem;
@@ -226,7 +231,7 @@
             popupButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const value = button.dataset.value;
-                    if (selectedCellIndex !== null) {
+                    if (selectedCellIndex !== null && !button.disabled) {
                         placeNumber(value, selectedCellIndex);
                         hideNumberPopup();
                     }
@@ -277,7 +282,7 @@
         function handleLongPressStart(event) {
             // Check for occupied or center cell to prevent issues
             const cell = event.target.closest('.grid-cell');
-            if (!cell || board[cell.dataset.index] !== null || cell.dataset.index == centerIndex) {
+            if (!cell || board[cell.dataset.index] !== null || parseInt(cell.dataset.index) === centerIndex) {
                 return;
             }
 
@@ -295,10 +300,31 @@
         function showNumberPopup(event) {
             const cell = event.target.closest('.grid-cell');
             const cellRect = cell.getBoundingClientRect();
-            const containerRect = gameContainer.getBoundingClientRect();
+            const popupRect = numberPopup.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
 
-            numberPopup.style.left = `${cellRect.left - containerRect.left + cellRect.width / 2}px`;
-            numberPopup.style.top = `${cellRect.top - containerRect.top + cellRect.height / 2}px`;
+            // Calculate the desired position
+            let popupLeft = cellRect.left + cellRect.width / 2;
+            let popupTop = cellRect.top + cellRect.height / 2;
+            
+            // Adjust horizontal position if it goes off-screen
+            if (popupLeft - popupRect.width / 2 < 0) {
+                popupLeft = popupRect.width / 2 + 10; // 10px margin
+            } else if (popupLeft + popupRect.width / 2 > viewportWidth) {
+                popupLeft = viewportWidth - popupRect.width / 2 - 10;
+            }
+
+            // Adjust vertical position if it goes off-screen
+            if (popupTop - popupRect.height / 2 < 0) {
+                popupTop = popupRect.height / 2 + 10; // 10px margin
+            } else if (popupTop + popupRect.height / 2 > viewportHeight) {
+                popupTop = viewportHeight - popupRect.height / 2 - 10;
+            }
+
+            // Apply the new position
+            numberPopup.style.left = `${popupLeft}px`;
+            numberPopup.style.top = `${popupTop}px`;
             numberPopup.style.display = 'flex';
 
             popupButtons.forEach(btn => {
