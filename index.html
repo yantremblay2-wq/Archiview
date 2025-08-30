@@ -291,12 +291,9 @@
             const cellRect = cell.getBoundingClientRect();
             const popupRect = numberPopup.getBoundingClientRect();
             
-            // Calculate ideal popup position to align '2' with the cell center + an offset
-            // We want to align the center of the '2' button with the center of the cell.
-            // The popup is a flex column-reverse, so the '2' is in the middle.
-            // A simple approach is to center the popup and then shift it slightly.
-            const horizontalOffset = 15; // Small offset to the right in pixels
-            let popupLeft = cellRect.left + cellRect.width / 2 - popupRect.width / 2 + horizontalOffset;
+            // Calculate ideal popup position to align the left edge of the popup
+            // with the center of the cell.
+            let popupLeft = cellRect.left + cellRect.width / 2;
             let popupTop = cellRect.top + cellRect.height / 2 - popupRect.height / 2;
             
             // Adjust position to stay within the viewport
