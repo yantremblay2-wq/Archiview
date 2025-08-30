@@ -305,27 +305,27 @@
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
 
-            // Calculate the desired position relative to the container
-            let popupLeft = cellRect.left - containerRect.left + cellRect.width / 2;
-            let popupTop = cellRect.top - containerRect.top + cellRect.height / 2;
+            // Calculate the desired position relative to the viewport
+            let targetX = cellRect.left + cellRect.width / 2;
+            let targetY = cellRect.top + cellRect.height / 2;
             
-            // Adjust horizontal position if it goes off-screen
-            if (cellRect.left + cellRect.width / 2 - popupRect.width / 2 < 0) {
-                popupLeft = cellRect.left - containerRect.left + popupRect.width / 2 + 10;
-            } else if (cellRect.left + cellRect.width / 2 + popupRect.width / 2 > viewportWidth) {
-                popupLeft = cellRect.left - containerRect.left + cellRect.width / 2 - (cellRect.left + cellRect.width / 2 + popupRect.width / 2 - viewportWidth) - 10;
+            // Adjust position to prevent going off-screen
+            // Horizontal
+            if (targetX - popupRect.width / 2 < 0) {
+                targetX = popupRect.width / 2 + 10;
+            } else if (targetX + popupRect.width / 2 > viewportWidth) {
+                targetX = viewportWidth - popupRect.width / 2 - 10;
+            }
+            // Vertical
+            if (targetY - popupRect.height / 2 < 0) {
+                targetY = popupRect.height / 2 + 10;
+            } else if (targetY + popupRect.height / 2 > viewportHeight) {
+                targetY = viewportHeight - popupRect.height / 2 - 10;
             }
 
-            // Adjust vertical position if it goes off-screen
-            if (cellRect.top + cellRect.height / 2 - popupRect.height / 2 < 0) {
-                popupTop = cellRect.top - containerRect.top + popupRect.height / 2 + 10;
-            } else if (cellRect.top + cellRect.height / 2 + popupRect.height / 2 > viewportHeight) {
-                popupTop = cellRect.top - containerRect.top + cellRect.height / 2 - (cellRect.top + cellRect.height / 2 + popupRect.height / 2 - viewportHeight) - 10;
-            }
-
-            // Apply the new position
-            numberPopup.style.left = `${popupLeft}px`;
-            numberPopup.style.top = `${popupTop}px`;
+            // Apply the new position relative to the game container
+            numberPopup.style.left = `${targetX - containerRect.left}px`;
+            numberPopup.style.top = `${targetY - containerRect.top}px`;
             numberPopup.style.display = 'flex';
 
             popupButtons.forEach(btn => {
