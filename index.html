@@ -42,7 +42,7 @@
             background-color: #f7fafc;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
         /* New class for centering content within the square */
         .grid-cell-content {
@@ -137,6 +137,9 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-top: 1rem;
         }
+        .selected-cell {
+            box-shadow: 0 0 0 4px #63b3ed;
+        }
     </style>
 </head>
 <body>
@@ -157,9 +160,9 @@
         </div>
 
         <div class="number-selector">
-            <button class="number-btn" data-value="1">1</button>
-            <button class="number-btn" data-value="2">2</button>
-            <button class="number-btn" data-value="3">3</button>
+            <button class="number-btn" data-value="1" disabled>1</button>
+            <button class="number-btn" data-value="2" disabled>2</button>
+            <button class="number-btn" data-value="3" disabled>3</button>
         </div>
 
         <div id="game-grid" class="game-grid"></div>
@@ -178,7 +181,7 @@
     <script>
         // Game state variables
         let currentPlayer = 1;
-        let selectedNumber = null;
+        let selectedCellIndex = null;
         let board = Array(25).fill(null);
         const gridSize = 5;
         const centerIndex = Math.floor(board.length / 2);
@@ -238,6 +241,9 @@
                     contentDiv.textContent = board[i].value;
                 } else {
                     cell.addEventListener('click', handleCellClick);
+                    if (i === selectedCellIndex) {
+                        cell.classList.add('selected-cell');
+                    }
                 }
                 gridEl.appendChild(cell);
             }
@@ -263,19 +269,39 @@
                 player1Card.classList.remove('active');
             }
 
+            // Disable all number buttons if no cell is selected
             numberButtons.forEach(btn => {
                 const num = btn.dataset.value;
-                btn.disabled = players[currentPlayer].numbers[num] === 0;
+                btn.disabled = selectedCellIndex === null || players[currentPlayer].numbers[num] === 0;
                 btn.classList.remove('selected');
-                if (num === selectedNumber) {
-                    btn.classList.add('selected');
-                }
             });
         }
 
         function selectNumber(value) {
-            selectedNumber = value;
-            updateUI();
+            if (selectedCellIndex !== null) {
+                // Save current state to history
+                history.push({ 
+                    board: [...board], 
+                    players: JSON.parse(JSON.stringify(players)), 
+                    currentPlayer: currentPlayer 
+                });
+
+                // Place the number in the selected cell
+                board[selectedCellIndex] = { value: parseInt(value), player: currentPlayer };
+                players[currentPlayer].numbers[value]--;
+
+                // Recalculate scores for both players
+                calculateScores();
+
+                // Switch player and reset selected cell
+                currentPlayer = currentPlayer === 1 ? 2 : 1;
+                selectedCellIndex = null;
+                
+                // Re-render and update UI
+                renderGrid();
+                updateUI();
+                checkGameOver();
+            }
         }
 
         function calculateScores() {
@@ -314,44 +340,30 @@
         }
 
         function handleCellClick(event) {
-            // Find the closest parent with the 'grid-cell' class to ensure we get the right element
             const cell = event.target.closest('.grid-cell');
-            if (!cell) return; // Exit if the click was not on a valid cell
+            if (!cell) return;
 
-            const cellIndex = cell.dataset.index;
-            if (cellIndex == centerIndex) {
+            const cellIndex = parseInt(cell.dataset.index);
+
+            // Check if the cell is already occupied or the center tile
+            if (board[cellIndex] !== null || cellIndex === centerIndex) {
                 return;
             }
 
-            if (selectedNumber === null) {
-                showMessage("Please select a number first.");
-                return;
+            // Deselect the previously selected cell if a new one is clicked
+            if (selectedCellIndex !== null) {
+                const oldCell = document.querySelector(`.grid-cell[data-index="${selectedCellIndex}"]`);
+                if (oldCell) {
+                    oldCell.classList.remove('selected-cell');
+                }
             }
-
-            if (board[cellIndex] === null) {
-                // Save current state to history
-                history.push({ 
-                    board: [...board], 
-                    players: JSON.parse(JSON.stringify(players)), 
-                    currentPlayer: currentPlayer 
-                });
-
-                // Place the number
-                board[cellIndex] = { value: parseInt(selectedNumber), player: currentPlayer };
-                players[currentPlayer].numbers[selectedNumber]--;
-
-                // Recalculate scores for both players
-                calculateScores();
-
-                // Switch player
-                currentPlayer = currentPlayer === 1 ? 2 : 1;
-                selectedNumber = null;
-                
-                // Re-render and update UI
-                renderGrid();
-                updateUI();
-                checkGameOver();
-            }
+            
+            // Select the new cell
+            selectedCellIndex = cellIndex;
+            cell.classList.add('selected-cell');
+            
+            // Re-render and update UI to enable number buttons
+            updateUI();
         }
 
         function undo() {
@@ -360,7 +372,7 @@
                 board = lastState.board;
                 players = lastState.players;
                 currentPlayer = lastState.currentPlayer;
-                selectedNumber = null;
+                selectedCellIndex = null;
                 renderGrid();
                 updateUI();
                 showMessage("Move undone.");
