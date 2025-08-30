@@ -104,7 +104,7 @@
             display: none; /* Hide default number selector */
         }
         .number-btn {
-            padding: 0.75rem 1.5rem;
+            padding: 0.5rem 1rem; /* Adjusted for smaller size */
             border-radius: 12px;
             font-size: 1.5rem;
             font-weight: 700;
@@ -141,14 +141,17 @@
         .popup {
             position: fixed;
             background-color: white;
-            padding: 1rem;
+            padding: 0.5rem; /* Adjusted for smaller size */
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             z-index: 100;
             display: flex;
             gap: 0.5rem;
-            /* New property for vertical alignment */
             flex-direction: column-reverse;
+            display: none; /* Hide by default */
+        }
+        .popup-visible {
+            display: flex; /* Class to show the popup */
         }
     </style>
 </head>
@@ -310,9 +313,7 @@
             // Set position relative to the document body
             numberPopup.style.left = `${popupLeft}px`;
             numberPopup.style.top = `${popupTop}px`;
-            numberPopup.style.display = 'flex';
-            numberPopup.style.transform = 'none'; // Remove the old centering transform
-            numberPopup.style.position = 'fixed'; // Change to fixed positioning for viewport-relative placement
+            numberPopup.classList.add('popup-visible');
 
             popupButtons.forEach(btn => {
                 const num = btn.dataset.value;
@@ -321,7 +322,7 @@
         }
 
         function hideNumberPopup() {
-            numberPopup.style.display = 'none';
+            numberPopup.classList.remove('popup-visible');
             selectedCellIndex = null;
         }
 
