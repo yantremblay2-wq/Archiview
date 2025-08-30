@@ -25,6 +25,7 @@
             width: 100%;
             max-width: 600px;
             text-align: center;
+            position: relative; /* For popup positioning */
         }
         .game-grid {
             display: grid;
@@ -43,6 +44,12 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
         }
         /* New class for centering content within the square */
         .grid-cell-content {
@@ -94,10 +101,7 @@
             background-color: #ebf8ff;
         }
         .number-selector {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
+            display: none; /* Hide default number selector */
         }
         .number-btn {
             padding: 0.75rem 1.5rem;
@@ -109,14 +113,6 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             background-color: #63b3ed;
             color: white;
-        }
-        .number-btn.selected {
-            background-color: #4299e1;
-            transform: scale(1.1);
-        }
-        .number-btn:disabled {
-            background-color: #a0aec0;
-            cursor: not-allowed;
         }
         #message-box {
             background-color: #fff;
@@ -137,8 +133,17 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-top: 1rem;
         }
-        .selected-cell {
-            box-shadow: 0 0 0 4px #63b3ed;
+        .popup {
+            position: absolute;
+            background-color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: flex;
+            gap: 0.5rem;
+            transform: translate(-50%, -50%);
+            display: none;
         }
     </style>
 </head>
@@ -159,10 +164,11 @@
             </div>
         </div>
 
-        <div class="number-selector">
-            <button class="number-btn" data-value="1" disabled>1</button>
-            <button class="number-btn" data-value="2" disabled>2</button>
-            <button class="number-btn" data-value="3" disabled>3</button>
+        <!-- The number selector is now a popup -->
+        <div id="number-popup" class="popup">
+            <button class="number-btn" data-value="1">1</button>
+            <button class="number-btn" data-value="2">2</button>
+            <button class="number-btn" data-value="3">3</button>
         </div>
 
         <div id="game-grid" class="game-grid"></div>
@@ -197,26 +203,42 @@
             }
         };
         const playerNames = { 1: 'White', 2: 'Black' };
+        let longPressTimer;
+        const longPressDuration = 500; // milliseconds
 
         // DOM elements
         const statusEl = document.getElementById('status');
         const gridEl = document.getElementById('game-grid');
-        const numberButtons = document.querySelectorAll('.number-btn');
+        const numberPopup = document.getElementById('number-popup');
+        const popupButtons = numberPopup.querySelectorAll('.number-btn');
         const undoBtn = document.getElementById('undo-btn');
         const player1Card = document.getElementById('player-1-card');
         const player2Card = document.getElementById('player-2-card');
         const messageBox = document.getElementById('message-box');
+        const gameContainer = document.querySelector('.game-container');
+
 
         // Initial rendering on page load
         window.onload = function() {
             renderGrid();
             updateUI();
 
-            // Event Listeners
-            numberButtons.forEach(button => {
-                button.addEventListener('click', () => selectNumber(button.dataset.value));
+            popupButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const value = button.dataset.value;
+                    if (selectedCellIndex !== null) {
+                        placeNumber(value, selectedCellIndex);
+                        hideNumberPopup();
+                    }
+                });
             });
+
             undoBtn.addEventListener('click', undo);
+            document.addEventListener('click', (event) => {
+                if (!numberPopup.contains(event.target) && !gridEl.contains(event.target)) {
+                    hideNumberPopup();
+                }
+            });
         };
 
         // Functions
@@ -240,13 +262,79 @@
                     cell.classList.add('occupied', `player-${board[i].player}`);
                     contentDiv.textContent = board[i].value;
                 } else {
-                    cell.addEventListener('click', handleCellClick);
-                    if (i === selectedCellIndex) {
-                        cell.classList.add('selected-cell');
-                    }
+                    // Set up long press event listeners
+                    cell.addEventListener('mousedown', handleLongPressStart);
+                    cell.addEventListener('mouseup', handleLongPressEnd);
+                    cell.addEventListener('mouseleave', handleLongPressEnd);
+                    cell.addEventListener('touchstart', handleLongPressStart, { passive: true });
+                    cell.addEventListener('touchend', handleLongPressEnd);
+                    cell.addEventListener('touchcancel', handleLongPressEnd);
                 }
                 gridEl.appendChild(cell);
             }
+        }
+        
+        function handleLongPressStart(event) {
+            // Check for occupied or center cell to prevent issues
+            const cell = event.target.closest('.grid-cell');
+            if (!cell || board[cell.dataset.index] !== null || cell.dataset.index == centerIndex) {
+                return;
+            }
+
+            event.preventDefault(); // Prevent default behavior like text selection
+            selectedCellIndex = parseInt(cell.dataset.index);
+            longPressTimer = setTimeout(() => {
+                showNumberPopup(event);
+            }, longPressDuration);
+        }
+
+        function handleLongPressEnd() {
+            clearTimeout(longPressTimer);
+        }
+
+        function showNumberPopup(event) {
+            const cell = event.target.closest('.grid-cell');
+            const cellRect = cell.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+
+            numberPopup.style.left = `${cellRect.left - containerRect.left + cellRect.width / 2}px`;
+            numberPopup.style.top = `${cellRect.top - containerRect.top + cellRect.height / 2}px`;
+            numberPopup.style.display = 'flex';
+
+            popupButtons.forEach(btn => {
+                const num = btn.dataset.value;
+                btn.disabled = players[currentPlayer].numbers[num] === 0;
+            });
+        }
+
+        function hideNumberPopup() {
+            numberPopup.style.display = 'none';
+            selectedCellIndex = null;
+        }
+
+        function placeNumber(value, index) {
+            // Save current state to history
+            history.push({ 
+                board: [...board], 
+                players: JSON.parse(JSON.stringify(players)), 
+                currentPlayer: currentPlayer 
+            });
+
+            // Place the number in the selected cell
+            board[index] = { value: parseInt(value), player: currentPlayer };
+            players[currentPlayer].numbers[value]--;
+
+            // Recalculate scores for both players
+            calculateScores();
+
+            // Switch player and reset selected cell
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            selectedCellIndex = null;
+            
+            // Re-render and update UI
+            renderGrid();
+            updateUI();
+            checkGameOver();
         }
 
         function updateUI() {
@@ -267,40 +355,6 @@
             } else {
                 player2Card.classList.add('active');
                 player1Card.classList.remove('active');
-            }
-
-            // Disable all number buttons if no cell is selected
-            numberButtons.forEach(btn => {
-                const num = btn.dataset.value;
-                btn.disabled = selectedCellIndex === null || players[currentPlayer].numbers[num] === 0;
-                btn.classList.remove('selected');
-            });
-        }
-
-        function selectNumber(value) {
-            if (selectedCellIndex !== null) {
-                // Save current state to history
-                history.push({ 
-                    board: [...board], 
-                    players: JSON.parse(JSON.stringify(players)), 
-                    currentPlayer: currentPlayer 
-                });
-
-                // Place the number in the selected cell
-                board[selectedCellIndex] = { value: parseInt(value), player: currentPlayer };
-                players[currentPlayer].numbers[value]--;
-
-                // Recalculate scores for both players
-                calculateScores();
-
-                // Switch player and reset selected cell
-                currentPlayer = currentPlayer === 1 ? 2 : 1;
-                selectedCellIndex = null;
-                
-                // Re-render and update UI
-                renderGrid();
-                updateUI();
-                checkGameOver();
             }
         }
 
@@ -337,33 +391,6 @@
                     players[cell.player].score += tileScore;
                 }
             }
-        }
-
-        function handleCellClick(event) {
-            const cell = event.target.closest('.grid-cell');
-            if (!cell) return;
-
-            const cellIndex = parseInt(cell.dataset.index);
-
-            // Check if the cell is already occupied or the center tile
-            if (board[cellIndex] !== null || cellIndex === centerIndex) {
-                return;
-            }
-
-            // Deselect the previously selected cell if a new one is clicked
-            if (selectedCellIndex !== null) {
-                const oldCell = document.querySelector(`.grid-cell[data-index="${selectedCellIndex}"]`);
-                if (oldCell) {
-                    oldCell.classList.remove('selected-cell');
-                }
-            }
-            
-            // Select the new cell
-            selectedCellIndex = cellIndex;
-            cell.classList.add('selected-cell');
-            
-            // Re-render and update UI to enable number buttons
-            updateUI();
         }
 
         function undo() {
