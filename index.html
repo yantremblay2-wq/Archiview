@@ -74,15 +74,6 @@
         .center-cell {
             background-color: #e2e8f0;
             cursor: not-allowed;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            color: #a0aec0;
-            position: relative;
-        }
-        .center-cell::after {
-            content: 'x';
         }
         .player-info {
             display: flex;
@@ -150,7 +141,6 @@
 </head>
 <body>
     <div class="game-container">
-        <h1 class="text-3xl font-bold mb-4">5x5 Number Grid</h1>
         <p id="status" class="text-xl font-semibold mb-4 text-gray-700"></p>
 
         <div class="player-info">
@@ -234,15 +224,18 @@
                 cell.classList.add('grid-cell');
                 cell.dataset.index = i;
                 
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('grid-cell-content');
+                cell.appendChild(contentDiv);
+                
                 if (i === centerIndex) {
                     cell.classList.add('center-cell');
+                    contentDiv.textContent = 'ko';
+                    contentDiv.style.fontSize = '1.5rem';
+                    contentDiv.style.color = '#a0aec0';
                 } else if (board[i] !== null) {
                     cell.classList.add('occupied', `player-${board[i].player}`);
-                    // Create a separate div to hold the number for perfect centering
-                    const contentDiv = document.createElement('div');
-                    contentDiv.classList.add('grid-cell-content');
                     contentDiv.textContent = board[i].value;
-                    cell.appendChild(contentDiv);
                 } else {
                     cell.addEventListener('click', handleCellClick);
                 }
@@ -321,7 +314,11 @@
         }
 
         function handleCellClick(event) {
-            const cellIndex = event.target.dataset.index;
+            // Find the closest parent with the 'grid-cell' class to ensure we get the right element
+            const cell = event.target.closest('.grid-cell');
+            if (!cell) return; // Exit if the click was not on a valid cell
+
+            const cellIndex = cell.dataset.index;
             if (cellIndex == centerIndex) {
                 return;
             }
