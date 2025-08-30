@@ -285,11 +285,18 @@
             event.stopPropagation(); // Prevent the document click listener from immediately hiding the popup
             selectedCellIndex = parseInt(cell.dataset.index);
 
+            // Fix: Show the popup first to force the browser to calculate its dimensions.
+            numberPopup.classList.add('popup-visible');
+
             const cellRect = cell.getBoundingClientRect();
             const popupRect = numberPopup.getBoundingClientRect();
             
-            // Calculate ideal popup position relative to the viewport
-            let popupLeft = cellRect.left + cellRect.width / 2 - popupRect.width / 2;
+            // Calculate ideal popup position to align '2' with the cell center + an offset
+            // We want to align the center of the '2' button with the center of the cell.
+            // The popup is a flex column-reverse, so the '2' is in the middle.
+            // A simple approach is to center the popup and then shift it slightly.
+            const horizontalOffset = 15; // Small offset to the right in pixels
+            let popupLeft = cellRect.left + cellRect.width / 2 - popupRect.width / 2 + horizontalOffset;
             let popupTop = cellRect.top + cellRect.height / 2 - popupRect.height / 2;
             
             // Adjust position to stay within the viewport
@@ -313,12 +320,6 @@
             // Set position relative to the document body
             numberPopup.style.left = `${popupLeft}px`;
             numberPopup.style.top = `${popupTop}px`;
-            numberPopup.classList.add('popup-visible');
-
-            popupButtons.forEach(btn => {
-                const num = btn.dataset.value;
-                btn.disabled = players[currentPlayer].numbers[num] === 0;
-            });
         }
 
         function hideNumberPopup() {
