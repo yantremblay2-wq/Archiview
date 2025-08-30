@@ -208,8 +208,6 @@
             }
         };
         const playerNames = { 1: 'White', 2: 'Black' };
-        let longPressTimer;
-        const longPressDuration = 500; // milliseconds
 
         // DOM elements
         const statusEl = document.getElementById('status');
@@ -240,6 +238,7 @@
 
             undoBtn.addEventListener('click', undo);
             document.addEventListener('click', (event) => {
+                // Hide popup if the user clicks outside of the grid or popup
                 if (!numberPopup.contains(event.target) && !gridEl.contains(event.target)) {
                     hideNumberPopup();
                 }
@@ -267,63 +266,47 @@
                     cell.classList.add('occupied', `player-${board[i].player}`);
                     contentDiv.textContent = board[i].value;
                 } else {
-                    // Set up long press event listeners
-                    cell.addEventListener('mousedown', handleLongPressStart);
-                    cell.addEventListener('mouseup', handleLongPressEnd);
-                    cell.addEventListener('mouseleave', handleLongPressEnd);
-                    cell.addEventListener('touchstart', handleLongPressStart, { passive: true });
-                    cell.addEventListener('touchend', handleLongPressEnd);
-                    cell.addEventListener('touchcancel', handleLongPressEnd);
+                    // Change to single click event listener
+                    cell.addEventListener('click', showNumberPopup);
                 }
                 gridEl.appendChild(cell);
             }
         }
         
-        function handleLongPressStart(event) {
-            // Check for occupied or center cell to prevent issues
+        function showNumberPopup(event) {
             const cell = event.target.closest('.grid-cell');
-            if (!cell || board[cell.dataset.index] !== null || parseInt(cell.dataset.index) === centerIndex) {
+            if (board[cell.dataset.index] !== null || parseInt(cell.dataset.index) === centerIndex) {
                 return;
             }
 
-            event.preventDefault(); // Prevent default behavior like text selection
+            event.stopPropagation(); // Prevent the document click listener from immediately hiding the popup
             selectedCellIndex = parseInt(cell.dataset.index);
-            longPressTimer = setTimeout(() => {
-                showNumberPopup(event);
-            }, longPressDuration);
-        }
 
-        function handleLongPressEnd() {
-            clearTimeout(longPressTimer);
-        }
-
-        function showNumberPopup(event) {
-            const cell = event.target.closest('.grid-cell');
             const cellRect = cell.getBoundingClientRect();
             const containerRect = gameContainer.getBoundingClientRect();
             const popupRect = numberPopup.getBoundingClientRect();
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-
-            // Calculate the desired position relative to the viewport
+            
+            // Calculate initial position relative to the viewport
             let targetX = cellRect.left + cellRect.width / 2;
             let targetY = cellRect.top + cellRect.height / 2;
             
-            // Adjust position to prevent going off-screen
-            // Horizontal
+            // Adjust position if it would go off-screen
+            // Horizontal check
             if (targetX - popupRect.width / 2 < 0) {
-                targetX = popupRect.width / 2 + 10;
+                targetX = popupRect.width / 2;
             } else if (targetX + popupRect.width / 2 > viewportWidth) {
-                targetX = viewportWidth - popupRect.width / 2 - 10;
+                targetX = viewportWidth - popupRect.width / 2;
             }
-            // Vertical
+            // Vertical check
             if (targetY - popupRect.height / 2 < 0) {
-                targetY = popupRect.height / 2 + 10;
+                targetY = popupRect.height / 2;
             } else if (targetY + popupRect.height / 2 > viewportHeight) {
-                targetY = viewportHeight - popupRect.height / 2 - 10;
+                targetY = viewportHeight - popupRect.height / 2;
             }
 
-            // Apply the new position relative to the game container
+            // Apply the final position relative to the game container
             numberPopup.style.left = `${targetX - containerRect.left}px`;
             numberPopup.style.top = `${targetY - containerRect.top}px`;
             numberPopup.style.display = 'flex';
