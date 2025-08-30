@@ -37,27 +37,31 @@
         }
         .grid-cell {
             width: 100%;
-            padding-top: 100%;
+            padding-top: 100%; /* This is the key to creating a perfect square aspect ratio */
             position: relative;
             background-color: #f7fafc;
             border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        /* New class for centering content within the square */
+        .grid-cell-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 2rem;
             font-weight: 700;
-            color: #2d3748;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
         }
         .grid-cell:hover:not(.occupied):not(.center-cell) {
             background-color: #e2e8f0;
         }
         .occupied {
             cursor: not-allowed;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .occupied.player-1 {
             background-color: #f7fafc;
@@ -71,8 +75,8 @@
             background-color: #e2e8f0;
             cursor: not-allowed;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             font-size: 1.5rem;
             color: #a0aec0;
             position: relative;
@@ -131,21 +135,32 @@
             font-weight: 700;
             margin-top: 1rem;
         }
+        #undo-btn {
+            background-color: #e2e8f0;
+            color: #4a5568;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1 class="text-3xl font-bold mb-4">5x5 Number Grid</h1>
-        <p id="status" class="text-xl font-semibold mb-4 text-gray-700">Player 1's turn</p>
+        <p id="status" class="text-xl font-semibold mb-4 text-gray-700"></p>
 
         <div class="player-info">
             <div id="player-1-card" class="player-card active">
-                <h3 class="text-lg font-bold">Player 1</h3>
+                <h3 class="text-lg font-bold">White</h3>
                 <p>1s: <span id="p1-1s">4</span> | 2s: <span id="p1-2s">4</span> | 3s: <span id="p1-3s">4</span></p>
                 <p>Score: <span id="p1-score">0</span></p>
             </div>
             <div id="player-2-card" class="player-card">
-                <h3 class="text-lg font-bold">Player 2</h3>
+                <h3 class="text-lg font-bold">Black</h3>
                 <p>1s: <span id="p2-1s">4</span> | 2s: <span id="p2-2s">4</span> | 3s: <span id="p2-3s">4</span></p>
                 <p>Score: <span id="p2-score">0</span></p>
             </div>
@@ -160,6 +175,14 @@
         <div id="game-grid" class="game-grid"></div>
         
         <div id="message-box" class="hidden"></div>
+        
+        <div class="flex justify-center gap-4 mt-4">
+            <button id="undo-btn">Undo</button>
+            <div id="total-score-card" class="player-card">
+                <h3 class="text-lg font-bold">Total Score</h3>
+                <p id="total-score">0</p>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -169,6 +192,7 @@
         let board = Array(25).fill(null);
         const gridSize = 5;
         const centerIndex = Math.floor(board.length / 2);
+        let history = []; // Stores past game states for undo
         let players = {
             1: {
                 numbers: { '1': 4, '2': 4, '3': 4 },
@@ -179,11 +203,13 @@
                 score: 0
             }
         };
+        const playerNames = { 1: 'White', 2: 'Black' };
 
         // DOM elements
         const statusEl = document.getElementById('status');
         const gridEl = document.getElementById('game-grid');
         const numberButtons = document.querySelectorAll('.number-btn');
+        const undoBtn = document.getElementById('undo-btn');
         const player1Card = document.getElementById('player-1-card');
         const player2Card = document.getElementById('player-2-card');
         const messageBox = document.getElementById('message-box');
@@ -197,6 +223,7 @@
             numberButtons.forEach(button => {
                 button.addEventListener('click', () => selectNumber(button.dataset.value));
             });
+            undoBtn.addEventListener('click', undo);
         };
 
         // Functions
@@ -211,7 +238,11 @@
                     cell.classList.add('center-cell');
                 } else if (board[i] !== null) {
                     cell.classList.add('occupied', `player-${board[i].player}`);
-                    cell.textContent = board[i].value;
+                    // Create a separate div to hold the number for perfect centering
+                    const contentDiv = document.createElement('div');
+                    contentDiv.classList.add('grid-cell-content');
+                    contentDiv.textContent = board[i].value;
+                    cell.appendChild(contentDiv);
                 } else {
                     cell.addEventListener('click', handleCellClick);
                 }
@@ -220,7 +251,7 @@
         }
 
         function updateUI() {
-            statusEl.textContent = `Player ${currentPlayer}'s turn`;
+            statusEl.textContent = `${playerNames[currentPlayer]}'s turn`;
             document.getElementById(`p1-1s`).textContent = players[1].numbers['1'];
             document.getElementById(`p1-2s`).textContent = players[1].numbers['2'];
             document.getElementById(`p1-3s`).textContent = players[1].numbers['3'];
@@ -229,6 +260,7 @@
             document.getElementById(`p2-3s`).textContent = players[2].numbers['3'];
             document.getElementById(`p1-score`).textContent = players[1].score;
             document.getElementById(`p2-score`).textContent = players[2].score;
+            document.getElementById('total-score').textContent = players[1].score + players[2].score;
 
             if (currentPlayer === 1) {
                 player1Card.classList.add('active');
@@ -300,6 +332,13 @@
             }
 
             if (board[cellIndex] === null) {
+                // Save current state to history
+                history.push({ 
+                    board: [...board], 
+                    players: JSON.parse(JSON.stringify(players)), 
+                    currentPlayer: currentPlayer 
+                });
+
                 // Place the number
                 board[cellIndex] = { value: parseInt(selectedNumber), player: currentPlayer };
                 players[currentPlayer].numbers[selectedNumber]--;
@@ -318,6 +357,21 @@
             }
         }
 
+        function undo() {
+            if (history.length > 0) {
+                const lastState = history.pop();
+                board = lastState.board;
+                players = lastState.players;
+                currentPlayer = lastState.currentPlayer;
+                selectedNumber = null;
+                renderGrid();
+                updateUI();
+                showMessage("Move undone.");
+            } else {
+                showMessage("Cannot undo further.");
+            }
+        }
+
         function checkGameOver() {
             const occupiedCells = board.filter(cell => cell !== null).length;
             if (occupiedCells === 24) {
@@ -325,9 +379,9 @@
                 const p2Score = players[2].score;
                 let winnerMessage = "";
                 if (p1Score > p2Score) {
-                    winnerMessage = `Game Over! Player 1 wins with a score of ${p1Score}!`;
+                    winnerMessage = `Game Over! White wins with a score of ${p1Score}!`;
                 } else if (p2Score > p1Score) {
-                    winnerMessage = `Game Over! Player 2 wins with a score of ${p2Score}!`;
+                    winnerMessage = `Game Over! Black wins with a score of ${p2Score}!`;
                 } else {
                     winnerMessage = `Game Over! It's a tie with a score of ${p1Score}!`;
                 }
@@ -342,7 +396,6 @@
                 messageBox.classList.add('hidden');
             }, 3000);
         }
-
     </script>
 </body>
 </html>
