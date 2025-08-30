@@ -139,7 +139,7 @@
             margin-top: 1rem;
         }
         .popup {
-            position: absolute;
+            position: fixed;
             background-color: white;
             padding: 1rem;
             border-radius: 12px;
@@ -147,8 +147,8 @@
             z-index: 100;
             display: flex;
             gap: 0.5rem;
-            transform: translate(-50%, -50%);
-            display: none;
+            /* New property for vertical alignment */
+            flex-direction: column-reverse;
         }
     </style>
 </head>
@@ -283,33 +283,36 @@
             selectedCellIndex = parseInt(cell.dataset.index);
 
             const cellRect = cell.getBoundingClientRect();
-            const containerRect = gameContainer.getBoundingClientRect();
             const popupRect = numberPopup.getBoundingClientRect();
+            
+            // Calculate ideal popup position relative to the viewport
+            let popupLeft = cellRect.left + cellRect.width / 2 - popupRect.width / 2;
+            let popupTop = cellRect.top + cellRect.height / 2 - popupRect.height / 2;
+            
+            // Adjust position to stay within the viewport
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             
-            // Calculate initial position relative to the viewport
-            let targetX = cellRect.left + cellRect.width / 2;
-            let targetY = cellRect.top + cellRect.height / 2;
-            
-            // Adjust position if it would go off-screen
             // Horizontal check
-            if (targetX - popupRect.width / 2 < 0) {
-                targetX = popupRect.width / 2;
-            } else if (targetX + popupRect.width / 2 > viewportWidth) {
-                targetX = viewportWidth - popupRect.width / 2;
-            }
-            // Vertical check
-            if (targetY - popupRect.height / 2 < 0) {
-                targetY = popupRect.height / 2;
-            } else if (targetY + popupRect.height / 2 > viewportHeight) {
-                targetY = viewportHeight - popupRect.height / 2;
+            if (popupLeft < 0) {
+                popupLeft = 0;
+            } else if (popupLeft + popupRect.width > viewportWidth) {
+                popupLeft = viewportWidth - popupRect.width;
             }
 
-            // Apply the final position relative to the game container
-            numberPopup.style.left = `${targetX - containerRect.left}px`;
-            numberPopup.style.top = `${targetY - containerRect.top}px`;
+            // Vertical check
+            if (popupTop < 0) {
+                popupTop = 0;
+            } else if (popupTop + popupRect.height > viewportHeight) {
+                popupTop = viewportHeight - popupRect.height;
+            }
+            
+            // Set position relative to the document body
+            numberPopup.style.left = `${popupLeft}px`;
+            numberPopup.style.top = `${popupTop}px`;
             numberPopup.style.display = 'flex';
+            numberPopup.style.transform = 'none'; // Remove the old centering transform
+            numberPopup.style.position = 'fixed'; // Change to fixed positioning for viewport-relative placement
 
             popupButtons.forEach(btn => {
                 const num = btn.dataset.value;
