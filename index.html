@@ -127,7 +127,7 @@
             font-weight: 700;
             margin-top: 1rem;
         }
-        #undo-btn {
+        .control-btn {
             background-color: #e2e8f0;
             color: #4a5568;
             padding: 0.75rem 1.5rem;
@@ -184,11 +184,12 @@
         <div id="message-box" class="hidden"></div>
         
         <div class="flex justify-center gap-4 mt-4">
-            <button id="undo-btn">Undo</button>
+            <button id="undo-btn" class="control-btn">Undo</button>
             <div id="total-score-card" class="player-card">
                 <h3 class="text-lg font-bold">Total Score</h3>
                 <p id="total-score">0</p>
             </div>
+            <button id="reset-btn" class="control-btn">Reset</button>
         </div>
     </div>
 
@@ -218,6 +219,7 @@
         const numberPopup = document.getElementById('number-popup');
         const popupButtons = numberPopup.querySelectorAll('.number-btn');
         const undoBtn = document.getElementById('undo-btn');
+        const resetBtn = document.getElementById('reset-btn');
         const player1Card = document.getElementById('player-1-card');
         const player2Card = document.getElementById('player-2-card');
         const messageBox = document.getElementById('message-box');
@@ -240,6 +242,7 @@
             });
 
             undoBtn.addEventListener('click', undo);
+            resetBtn.addEventListener('click', resetGame);
             document.addEventListener('click', (event) => {
                 // Hide popup if the user clicks outside of the grid or popup
                 if (!numberPopup.contains(event.target) && !gridEl.contains(event.target)) {
@@ -284,8 +287,18 @@
 
             event.stopPropagation(); // Prevent the document click listener from immediately hiding the popup
             selectedCellIndex = parseInt(cell.dataset.index);
+            
+            // Check remaining numbers and disable buttons if count is zero
+            popupButtons.forEach(button => {
+                const value = button.dataset.value;
+                if (players[currentPlayer].numbers[value] > 0) {
+                    button.disabled = false;
+                } else {
+                    button.disabled = true;
+                }
+            });
 
-            // Fix: Show the popup first to force the browser to calculate its dimensions.
+            // Show the popup first to force the browser to calculate its dimensions.
             numberPopup.classList.add('popup-visible');
 
             const cellRect = cell.getBoundingClientRect();
@@ -368,6 +381,29 @@
                 player2Card.classList.add('active');
                 player1Card.classList.remove('active');
             }
+        }
+        
+        function resetGame() {
+            // Reset all game state variables to their initial values
+            currentPlayer = 1;
+            selectedCellIndex = null;
+            board = Array(25).fill(null);
+            history = [];
+            players = {
+                1: {
+                    numbers: { '1': 4, '2': 4, '3': 4 },
+                    score: 0
+                },
+                2: {
+                    numbers: { '1': 4, '2': 4, '3': 4 },
+                    score: 0
+                }
+            };
+            
+            // Re-render and update UI to reflect the reset state
+            renderGrid();
+            updateUI();
+            showMessage("Game has been reset.");
         }
 
         function calculateScores() {
