@@ -23,9 +23,9 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 2rem;
             width: 100%;
-            max-width: 600px;
+            max-width: 500px; /* Adjusted max-width for 5x5 grid */
             text-align: center;
-            position: relative; /* For popup positioning */
+            position: relative;
         }
         .game-grid {
             display: grid;
@@ -38,20 +38,19 @@
         }
         .grid-cell {
             width: 100%;
-            padding-top: 100%; /* This is the key to creating a perfect square aspect ratio */
+            padding-top: 100%;
             position: relative;
             background-color: #f7fafc;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s ease, box-shadow 0.2s ease;
-            -webkit-touch-callout: none; /* iOS Safari */
-            -webkit-user-select: none; /* Safari */
-            -khtml-user-select: none; /* Konqueror HTML */
-            -moz-user-select: none; /* Old versions of Firefox */
-            -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
-        /* New class for centering content within the square */
         .grid-cell-content {
             position: absolute;
             top: 0;
@@ -61,10 +60,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
         }
-        .grid-cell:hover:not(.occupied):not(.center-cell) {
+        .grid-cell:hover:not(.occupied) {
             background-color: #e2e8f0;
         }
         .occupied {
@@ -77,10 +76,6 @@
         .occupied.player-2 {
             background-color: #2d3748;
             color: #ffffff;
-        }
-        .center-cell {
-            background-color: #e2e8f0;
-            cursor: not-allowed;
         }
         .player-info {
             display: flex;
@@ -101,10 +96,10 @@
             background-color: #ebf8ff;
         }
         .number-selector {
-            display: none; /* Hide default number selector */
+            display: none;
         }
         .number-btn {
-            padding: 0.5rem 1rem; /* Adjusted for smaller size */
+            padding: 0.5rem 1rem;
             border-radius: 12px;
             font-size: 1.5rem;
             font-weight: 700;
@@ -141,17 +136,17 @@
         .popup {
             position: fixed;
             background-color: white;
-            padding: 0.5rem; /* Adjusted for smaller size */
+            padding: 0.5rem;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             z-index: 100;
             display: flex;
             gap: 0.5rem;
             flex-direction: column-reverse;
-            display: none; /* Hide by default */
+            display: none;
         }
         .popup-visible {
-            display: flex; /* Class to show the popup */
+            display: flex;
         }
     </style>
 </head>
@@ -162,17 +157,16 @@
         <div class="player-info">
             <div id="player-1-card" class="player-card active">
                 <h3 class="text-lg font-bold">White</h3>
-                <p>1s: <span id="p1-1s">4</span> | 2s: <span id="p1-2s">4</span> | 3s: <span id="p1-3s">4</span></p>
+                <p>1s: <span id="p1-1s"></span> | 2s: <span id="p1-2s"></span> | 3s: <span id="p1-3s"></span></p>
                 <p>Score: <span id="p1-score">0</span></p>
             </div>
             <div id="player-2-card" class="player-card">
                 <h3 class="text-lg font-bold">Black</h3>
-                <p>1s: <span id="p2-1s">4</span> | 2s: <span id="p2-2s">4</span> | 3s: <span id="p2-3s">4</span></p>
+                <p>1s: <span id="p2-1s"></span> | 2s: <span id="p2-2s"></span> | 3s: <span id="p2-3s"></span></p>
                 <p>Score: <span id="p2-score">0</span></p>
             </div>
         </div>
 
-        <!-- The number selector is now a popup -->
         <div id="number-popup" class="popup">
             <button class="number-btn" data-value="1">1</button>
             <button class="number-btn" data-value="2">2</button>
@@ -197,10 +191,9 @@
         // Game state variables
         let currentPlayer = 1;
         let selectedCellIndex = null;
-        let board = Array(25).fill(null);
         const gridSize = 5;
-        const centerIndex = Math.floor(board.length / 2);
-        let history = []; // Stores past game states for undo
+        let board = Array(gridSize * gridSize).fill(null);
+        let history = [];
         let players = {
             1: {
                 numbers: { '1': 4, '2': 4, '3': 4 },
@@ -223,8 +216,6 @@
         const player1Card = document.getElementById('player-1-card');
         const player2Card = document.getElementById('player-2-card');
         const messageBox = document.getElementById('message-box');
-        const gameContainer = document.querySelector('.game-container');
-
 
         // Initial rendering on page load
         window.onload = function() {
@@ -244,7 +235,6 @@
             undoBtn.addEventListener('click', undo);
             resetBtn.addEventListener('click', resetGame);
             document.addEventListener('click', (event) => {
-                // Hide popup if the user clicks outside of the grid or popup
                 if (!numberPopup.contains(event.target) && !gridEl.contains(event.target)) {
                     hideNumberPopup();
                 }
@@ -254,7 +244,7 @@
         // Functions
         function renderGrid() {
             gridEl.innerHTML = '';
-            for (let i = 0; i < 25; i++) {
+            for (let i = 0; i < gridSize * gridSize; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('grid-cell');
                 cell.dataset.index = i;
@@ -263,16 +253,10 @@
                 contentDiv.classList.add('grid-cell-content');
                 cell.appendChild(contentDiv);
                 
-                if (i === centerIndex) {
-                    cell.classList.add('center-cell');
-                    contentDiv.textContent = 'ko';
-                    contentDiv.style.fontSize = '1.5rem';
-                    contentDiv.style.color = '#a0aec0';
-                } else if (board[i] !== null) {
+                if (board[i] !== null) {
                     cell.classList.add('occupied', `player-${board[i].player}`);
                     contentDiv.textContent = board[i].value;
                 } else {
-                    // Change to single click event listener
                     cell.addEventListener('click', showNumberPopup);
                 }
                 gridEl.appendChild(cell);
@@ -281,53 +265,41 @@
         
         function showNumberPopup(event) {
             const cell = event.target.closest('.grid-cell');
-            if (board[cell.dataset.index] !== null || parseInt(cell.dataset.index) === centerIndex) {
+            if (board[cell.dataset.index] !== null) {
                 return;
             }
 
-            event.stopPropagation(); // Prevent the document click listener from immediately hiding the popup
+            event.stopPropagation();
             selectedCellIndex = parseInt(cell.dataset.index);
             
-            // Check remaining numbers and disable buttons if count is zero
             popupButtons.forEach(button => {
                 const value = button.dataset.value;
-                if (players[currentPlayer].numbers[value] > 0) {
-                    button.disabled = false;
-                } else {
-                    button.disabled = true;
-                }
+                button.disabled = players[currentPlayer].numbers[value] <= 0;
             });
 
-            // Show the popup first to force the browser to calculate its dimensions.
             numberPopup.classList.add('popup-visible');
 
             const cellRect = cell.getBoundingClientRect();
             const popupRect = numberPopup.getBoundingClientRect();
             
-            // Calculate ideal popup position to align the left edge of the popup
-            // with the center of the cell.
             let popupLeft = cellRect.left + cellRect.width / 2;
             let popupTop = cellRect.top + cellRect.height / 2 - popupRect.height / 2;
             
-            // Adjust position to stay within the viewport
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             
-            // Horizontal check
             if (popupLeft < 0) {
                 popupLeft = 0;
             } else if (popupLeft + popupRect.width > viewportWidth) {
                 popupLeft = viewportWidth - popupRect.width;
             }
 
-            // Vertical check
             if (popupTop < 0) {
                 popupTop = 0;
             } else if (popupTop + popupRect.height > viewportHeight) {
                 popupTop = viewportHeight - popupRect.height;
             }
             
-            // Set position relative to the document body
             numberPopup.style.left = `${popupLeft}px`;
             numberPopup.style.top = `${popupTop}px`;
         }
@@ -338,25 +310,20 @@
         }
 
         function placeNumber(value, index) {
-            // Save current state to history
             history.push({ 
-                board: [...board], 
+                board: JSON.parse(JSON.stringify(board)), 
                 players: JSON.parse(JSON.stringify(players)), 
                 currentPlayer: currentPlayer 
             });
 
-            // Place the number in the selected cell
             board[index] = { value: parseInt(value), player: currentPlayer };
             players[currentPlayer].numbers[value]--;
 
-            // Recalculate scores for both players
             calculateScores();
 
-            // Switch player and reset selected cell
             currentPlayer = currentPlayer === 1 ? 2 : 1;
             selectedCellIndex = null;
             
-            // Re-render and update UI
             renderGrid();
             updateUI();
             checkGameOver();
@@ -384,10 +351,9 @@
         }
         
         function resetGame() {
-            // Reset all game state variables to their initial values
             currentPlayer = 1;
             selectedCellIndex = null;
-            board = Array(25).fill(null);
+            board = Array(gridSize * gridSize).fill(null);
             history = [];
             players = {
                 1: {
@@ -400,18 +366,16 @@
                 }
             };
             
-            // Re-render and update UI to reflect the reset state
             renderGrid();
             updateUI();
             showMessage("Game has been reset.");
         }
 
         function calculateScores() {
-            // Reset scores
             players[1].score = 0;
             players[2].score = 0;
 
-            for (let i = 0; i < 25; i++) {
+            for (let i = 0; i < gridSize * gridSize; i++) {
                 const cell = board[i];
                 if (cell !== null) {
                     const row = Math.floor(i / gridSize);
@@ -419,10 +383,10 @@
                     let tileScore = 0;
 
                     const neighbors = [
-                        { r: row - 1, c: col }, // top
-                        { r: row + 1, c: col }, // bottom
-                        { r: row, c: col - 1 }, // left
-                        { r: row, c: col + 1 }  // right
+                        { r: row - 1, c: col },
+                        { r: row + 1, c: col },
+                        { r: row, c: col - 1 },
+                        { r: row, c: col + 1 }
                     ];
 
                     neighbors.forEach(neighbor => {
@@ -431,7 +395,6 @@
                             const neighborValue = board[neighborIndex] ? board[neighborIndex].value : 0;
                             tileScore += Math.max(0, cell.value - neighborValue);
                         } else {
-                            // Neighbor is outside the grid, treat as 0
                             tileScore += Math.max(0, cell.value - 0);
                         }
                     });
@@ -458,7 +421,7 @@
 
         function checkGameOver() {
             const occupiedCells = board.filter(cell => cell !== null).length;
-            if (occupiedCells === 24) {
+            if (occupiedCells === (gridSize * gridSize - 1)) {
                 const p1Score = players[1].score;
                 const p2Score = players[2].score;
                 let winnerMessage = "";
