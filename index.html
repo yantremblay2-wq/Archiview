@@ -148,10 +148,19 @@
         .popup-visible {
             display: flex;
         }
+        #timer-display {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #4a5568;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
+        <div id="timer-display">00:00</div>
         <p id="status" class="text-xl font-semibold mb-4 text-gray-700"></p>
 
         <div class="player-info">
@@ -184,6 +193,7 @@
                 <p id="total-score">0</p>
             </div>
             <button id="reset-btn" class="control-btn">Reset</button>
+            <button id="toggle-size-btn" class="control-btn">Switch to 7x7</button>
         </div>
     </div>
 
@@ -191,7 +201,7 @@
         // Game state variables
         let currentPlayer = 1;
         let selectedCellIndex = null;
-        const gridSize = 5;
+        let gridSize = 5;
         let board = Array(gridSize * gridSize).fill(null);
         let history = [];
         let players = {
@@ -206,6 +216,11 @@
         };
         const playerNames = { 1: 'White', 2: 'Black' };
 
+        // Timer variables
+        let timerInterval = null;
+        let startTime = null;
+        let isFirstMove = true;
+
         // DOM elements
         const statusEl = document.getElementById('status');
         const gridEl = document.getElementById('game-grid');
@@ -213,14 +228,19 @@
         const popupButtons = numberPopup.querySelectorAll('.number-btn');
         const undoBtn = document.getElementById('undo-btn');
         const resetBtn = document.getElementById('reset-btn');
+        const toggleSizeBtn = document.getElementById('toggle-size-btn');
         const player1Card = document.getElementById('player-1-card');
         const player2Card = document.getElementById('player-2-card');
         const messageBox = document.getElementById('message-box');
+        const timerDisplay = document.getElementById('timer-display');
 
         // Initial rendering on page load
         window.onload = function() {
             renderGrid();
             updateUI();
+            
+            // Set initial timer display to 00:00
+            timerDisplay.textContent = '00:00';
 
             popupButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -234,6 +254,8 @@
 
             undoBtn.addEventListener('click', undo);
             resetBtn.addEventListener('click', resetGame);
+            toggleSizeBtn.addEventListener('click', toggleGridSize);
+
             document.addEventListener('click', (event) => {
                 if (!numberPopup.contains(event.target) && !gridEl.contains(event.target)) {
                     hideNumberPopup();
@@ -244,6 +266,8 @@
         // Functions
         function renderGrid() {
             gridEl.innerHTML = '';
+            gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('grid-cell');
@@ -260,6 +284,30 @@
                     cell.addEventListener('click', showNumberPopup);
                 }
                 gridEl.appendChild(cell);
+            }
+        }
+
+        function startTimer() {
+            stopTimer(); // Clear any existing timer
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+            updateTimerDisplay(); // Initial display
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            if (startTime) {
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsedSeconds / 60);
+                const seconds = elapsedSeconds % 60;
+                const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                timerDisplay.textContent = formattedTime;
             }
         }
         
@@ -310,6 +358,11 @@
         }
 
         function placeNumber(value, index) {
+            if (isFirstMove) {
+                startTimer();
+                isFirstMove = false;
+            }
+
             history.push({ 
                 board: JSON.parse(JSON.stringify(board)), 
                 players: JSON.parse(JSON.stringify(players)), 
@@ -355,20 +408,32 @@
             selectedCellIndex = null;
             board = Array(gridSize * gridSize).fill(null);
             history = [];
-            players = {
-                1: {
-                    numbers: { '1': 4, '2': 4, '3': 4 },
-                    score: 0
-                },
-                2: {
-                    numbers: { '1': 4, '2': 4, '3': 4 },
-                    score: 0
-                }
-            };
+
+            // Adjusted numbers based on grid size
+            if (gridSize === 7) {
+                players = {
+                    1: { numbers: { '1': 8, '2': 8, '3': 8 }, score: 0 },
+                    2: { numbers: { '1': 8, '2': 8, '3': 8 }, score: 0 }
+                };
+            } else {
+                players = {
+                    1: { numbers: { '1': 4, '2': 4, '3': 4 }, score: 0 },
+                    2: { numbers: { '1': 4, '2': 4, '3': 4 }, score: 0 }
+                };
+            }
             
             renderGrid();
             updateUI();
+            stopTimer(); // Stop the timer when the game is reset
+            isFirstMove = true; // Reset the flag
+            timerDisplay.textContent = '00:00'; // Reset timer display
             showMessage("Game has been reset.");
+        }
+
+        function toggleGridSize() {
+            gridSize = (gridSize === 5) ? 7 : 5;
+            toggleSizeBtn.textContent = `Switch to ${gridSize === 5 ? '7x7' : '5x5'}`;
+            resetGame();
         }
 
         function calculateScores() {
@@ -421,16 +486,18 @@
 
         function checkGameOver() {
             const occupiedCells = board.filter(cell => cell !== null).length;
-            if (occupiedCells === (gridSize * gridSize - 1)) {
+            if (occupiedCells === (gridSize * gridSize)) {
+                stopTimer();
                 const p1Score = players[1].score;
                 const p2Score = players[2].score;
+                const finalTime = timerDisplay.textContent;
                 let winnerMessage = "";
                 if (p1Score > p2Score) {
-                    winnerMessage = `Game Over! White wins with a score of ${p1Score}!`;
+                    winnerMessage = `Game Over! White wins with a score of ${p1Score}! Final time: ${finalTime}.`;
                 } else if (p2Score > p1Score) {
-                    winnerMessage = `Game Over! Black wins with a score of ${p2Score}!`;
+                    winnerMessage = `Game Over! Black wins with a score of ${p2Score}! Final time: ${finalTime}.`;
                 } else {
-                    winnerMessage = `Game Over! It's a tie with a score of ${p1Score}!`;
+                    winnerMessage = `Game Over! It's a tie with a score of ${p1Score}! Final time: ${finalTime}.`;
                 }
                 showMessage(winnerMessage);
             }
@@ -441,7 +508,7 @@
             messageBox.classList.remove('hidden');
             setTimeout(() => {
                 messageBox.classList.add('hidden');
-            }, 3000);
+            }, 5000);
         }
     </script>
 </body>
