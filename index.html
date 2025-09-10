@@ -486,7 +486,7 @@
 
         function checkGameOver() {
             const occupiedCells = board.filter(cell => cell !== null).length;
-            if (occupiedCells === (gridSize * gridSize)) {
+            if (occupiedCells === (gridSize * gridSize) - 1) { // Corrected logic here
                 stopTimer();
                 const p1Score = players[1].score;
                 const p2Score = players[2].score;
