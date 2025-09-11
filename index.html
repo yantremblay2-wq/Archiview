@@ -186,14 +186,16 @@
         
         <div id="message-box" class="hidden"></div>
         
-        <div class="flex justify-center gap-4 mt-4">
-            <button id="undo-btn" class="control-btn">Undo</button>
+        <div class="flex flex-col items-center mt-4">
             <div id="total-score-card" class="player-card">
                 <h3 class="text-lg font-bold">Total Score</h3>
                 <p id="total-score">0</p>
             </div>
-            <button id="reset-btn" class="control-btn">Reset</button>
-            <button id="toggle-size-btn" class="control-btn">Switch to 7x7</button>
+            <div class="flex justify-center gap-4 mt-4 w-full">
+                <button id="undo-btn" class="control-btn">Undo</button>
+                <button id="reset-btn" class="control-btn">Reset</button>
+                <button id="toggle-size-btn" class="control-btn">Switch to 7x7</button>
+            </div>
         </div>
     </div>
 
