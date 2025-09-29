@@ -23,7 +23,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 2rem;
             width: 100%;
-            max-width: 500px; /* Adjusted max-width for 5x5 grid */
+            max-width: 500px;
             text-align: center;
             position: relative;
         }
@@ -35,93 +35,155 @@
             border: 2px solid #cbd5e0;
             border-radius: 12px;
             padding: 8px;
+            width: 100%;
+            max-width: 400px;
         }
         .grid-cell {
-            width: 100%;
-            padding-top: 100%;
+            aspect-ratio: 1 / 1;
             position: relative;
             background-color: #f7fafc;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s ease, box-shadow 0.2s ease;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
+            /* Force minimum height to prevent collapse */
+            min-height: 60px;
         }
+        .grid-cell:hover {
+            background-color: #e2e8f0;
+        }
+        
+        /* --- CLS FIX: Fixed Content Container --- */
         .grid-cell-content {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 1.5rem;
             font-weight: 700;
+            line-height: 1;
         }
-        .grid-cell:hover:not(.occupied) {
-            background-color: #e2e8f0;
+
+        /* Use opacity instead of visibility to maintain layout */
+        .grid-cell-content.transparent-content {
+            opacity: 0;
+            pointer-events: none;
         }
-        .occupied {
-            cursor: not-allowed;
-        }
+        /* --- END CLS FIX --- */
+
+        /* Tile appearance on the grid */
         .occupied.player-1 {
             background-color: #f7fafc;
             color: #2d3748;
+            border: 2px solid #63b3ed; 
         }
         .occupied.player-2 {
             background-color: #2d3748;
             color: #ffffff;
+            border: 2px solid #a0aec0;
         }
         .player-info {
             display: flex;
-            justify-content: space-around;
+            justify-content: center;
+            gap: 1rem;
             margin-bottom: 1.5rem;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            align-items: stretch;
         }
         .player-card {
-            background-color: #e2e8f0;
             padding: 1rem;
             border-radius: 12px;
-            width: 45%;
+            flex: 0 1 auto;
             min-width: 150px;
-            margin-top: 1rem;
+            max-width: 200px;
         }
-        .player-card.active {
-            box-shadow: 0 0 0 3px #63b3ed;
-            background-color: #ebf8ff;
+        
+        #player-1-card {
+            background-color: #ffffff;
+            color: #2d3748;
+            border: 2px solid #2d3748;
         }
-        .number-selector {
-            display: none;
+        
+        #player-2-card {
+            background-color: #2d3748;
+            color: #ffffff;
+            border: 2px solid #2d3748;
         }
-        .number-btn {
+        
+        #total-score-card {
+            background-color: #e2e8f0;
             padding: 0.5rem 1rem;
             border-radius: 12px;
-            font-size: 1.5rem;
+            min-width: 150px;
+            max-width: 200px;
+            margin: 1rem auto 0.5rem auto;
+        }
+        
+        .number-btn {
+            border-radius: 8px;
+            font-size: 1.25rem;
             font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            background-color: #63b3ed;
-            color: white;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            box-shadow: none;
+            min-width: 50px;
+            padding: 0.75rem 0.5rem;
+            line-height: 1;
+        }
+        .number-btn:hover:not([disabled]) {
+            transform: scale(1.05);
         }
         .number-btn[disabled] {
-            background-color: #a0aec0;
+            opacity: 0.4;
             cursor: not-allowed;
             transform: scale(1);
         }
-        #message-box {
-            background-color: #fff;
-            padding: 1rem;
+
+        /* --- POPUP STYLES --- */
+        .popup {
+            position: fixed;
+            background-color: #f0f4f8; 
+            padding: 0.5rem;
             border-radius: 12px;
-            text-align: center;
-            font-weight: 700;
-            margin-top: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: none;
+            flex-direction: column; 
+            gap: 0;
         }
+        .popup-visible {
+            display: flex;
+        }
+        .popup-columns {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .popup-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+        /* Style for the White column (Light Grey Tile, Black Number) */
+        .popup-btn-p1 {
+            background-color: #f7fafc;
+            color: #2d3748;
+            border: 3px solid #2d3748;
+        }
+        /* Style for the Black column (Black Tile, White Number) */
+        .popup-btn-p2 {
+            background-color: #2d3748;
+            color: white;
+            border: 3px solid #2d3748;
+        }
+        /* --- END POPUP STYLES --- */
+
+        
         .control-btn {
             background-color: #e2e8f0;
             color: #4a5568;
@@ -132,21 +194,6 @@
             transition: transform 0.2s ease;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-top: 1rem;
-        }
-        .popup {
-            position: fixed;
-            background-color: white;
-            padding: 0.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            z-index: 100;
-            display: flex;
-            gap: 0.5rem;
-            flex-direction: column-reverse;
-            display: none;
-        }
-        .popup-visible {
-            display: flex;
         }
         #timer-display {
             position: absolute;
@@ -161,37 +208,45 @@
 <body>
     <div class="game-container">
         <div id="timer-display">00:00</div>
-        <p id="status" class="text-xl font-semibold mb-4 text-gray-700"></p>
+        <!-- Status bar removed -->
 
         <div class="player-info">
-            <div id="player-1-card" class="player-card active">
-                <h3 class="text-lg font-bold">White</h3>
+            <div id="player-1-card" class="player-card">
                 <p>1s: <span id="p1-1s"></span> | 2s: <span id="p1-2s"></span> | 3s: <span id="p1-3s"></span></p>
-                <p>Score: <span id="p1-score">0</span></p>
+                <p class="mt-1 font-bold">Score: <span id="p1-score">0</span></p>
             </div>
             <div id="player-2-card" class="player-card">
-                <h3 class="text-lg font-bold">Black</h3>
                 <p>1s: <span id="p2-1s"></span> | 2s: <span id="p2-2s"></span> | 3s: <span id="p2-3s"></span></p>
-                <p>Score: <span id="p2-score">0</span></p>
+                <p class="mt-1 font-bold">Score: <span id="p2-score">0</span></p>
             </div>
         </div>
 
         <div id="number-popup" class="popup">
-            <button class="number-btn" data-value="1">1</button>
-            <button class="number-btn" data-value="2">2</button>
-            <button class="number-btn" data-value="3">3</button>
+            <div class="popup-columns">
+                <!-- White Column (Light Grey Tile, Black Number) -->
+                <div class="popup-column">
+                    <button class="number-btn popup-btn-p1" data-player="1" data-value="3">3</button>
+                    <button class="number-btn popup-btn-p1" data-player="1" data-value="2">2</button>
+                    <button class="number-btn popup-btn-p1" data-player="1" data-value="1">1</button>
+                </div>
+                <!-- Black Column (Black Tile, White Number) -->
+                <div class="popup-column">
+                    <button class="number-btn popup-btn-p2" data-player="2" data-value="3">3</button>
+                    <button class="number-btn popup-btn-p2" data-player="2" data-value="2">2</button>
+                    <button class="number-btn popup-btn-p2" data-player="2" data-value="1">1</button>
+                </div>
+            </div>
         </div>
 
         <div id="game-grid" class="game-grid"></div>
-        
-        <div id="message-box" class="hidden"></div>
-        
+
+        <div id="total-score-card">
+            <h3 id="total-score-title" class="text-sm font-bold">Total Score</h3>
+            <p id="total-score" class="font-bold text-xl">0</p>
+        </div>
+
         <div class="flex flex-col items-center mt-4">
-            <div id="total-score-card" class="player-card">
-                <h3 class="text-lg font-bold">Total Score</h3>
-                <p id="total-score">0</p>
-            </div>
-            <div class="flex justify-center gap-4 mt-4 w-full">
+            <div class="flex justify-center gap-4 w-full">
                 <button id="undo-btn" class="control-btn">Undo</button>
                 <button id="reset-btn" class="control-btn">Reset</button>
                 <button id="toggle-size-btn" class="control-btn">Switch to 7x7</button>
@@ -201,21 +256,18 @@
 
     <script>
         // Game state variables
-        let currentPlayer = 1;
         let selectedCellIndex = null;
         let gridSize = 5;
         let board = Array(gridSize * gridSize).fill(null);
-        let history = [];
+        let history = []; // Stores state BEFORE each successful move
+
+        let initialPlayerCounts = { '1': 4, '2': 4, '3': 4 };
+
         let players = {
-            1: {
-                numbers: { '1': 4, '2': 4, '3': 4 },
-                score: 0
-            },
-            2: {
-                numbers: { '1': 4, '2': 4, '3': 4 },
-                score: 0
-            }
+            1: { numbers: JSON.parse(JSON.stringify(initialPlayerCounts)), score: 0 },
+            2: { numbers: JSON.parse(JSON.stringify(initialPlayerCounts)), score: 0 }
         };
+
         const playerNames = { 1: 'White', 2: 'Black' };
 
         // Timer variables
@@ -224,42 +276,39 @@
         let isFirstMove = true;
 
         // DOM elements
-        const statusEl = document.getElementById('status');
         const gridEl = document.getElementById('game-grid');
         const numberPopup = document.getElementById('number-popup');
         const popupButtons = numberPopup.querySelectorAll('.number-btn');
         const undoBtn = document.getElementById('undo-btn');
         const resetBtn = document.getElementById('reset-btn');
         const toggleSizeBtn = document.getElementById('toggle-size-btn');
-        const player1Card = document.getElementById('player-1-card');
-        const player2Card = document.getElementById('player-2-card');
-        const messageBox = document.getElementById('message-box');
         const timerDisplay = document.getElementById('timer-display');
+        const totalScoreTitleEl = document.getElementById('total-score-title'); 
 
-        // Initial rendering on page load
+        // Initial rendering and setup
         window.onload = function() {
-            renderGrid();
-            updateUI();
-            
-            // Set initial timer display to 00:00
+            resetGame(false);
+
             timerDisplay.textContent = '00:00';
 
             popupButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const value = button.dataset.value;
+                    const player = parseInt(button.dataset.player);
                     if (selectedCellIndex !== null && !button.disabled) {
-                        placeNumber(value, selectedCellIndex);
+                        placeNumber(player, value, selectedCellIndex);
                         hideNumberPopup();
                     }
                 });
             });
 
             undoBtn.addEventListener('click', undo);
-            resetBtn.addEventListener('click', resetGame);
+            resetBtn.addEventListener('click', () => resetGame(true));
             toggleSizeBtn.addEventListener('click', toggleGridSize);
 
             document.addEventListener('click', (event) => {
-                if (!numberPopup.contains(event.target) && !gridEl.contains(event.target)) {
+                // Hide popup if click is outside the popup AND outside the grid cells
+                if (!numberPopup.contains(event.target) && !event.target.closest('.grid-cell')) {
                     hideNumberPopup();
                 }
             });
@@ -269,31 +318,38 @@
         function renderGrid() {
             gridEl.innerHTML = '';
             gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            
+
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('grid-cell');
                 cell.dataset.index = i;
-                
+
                 const contentDiv = document.createElement('div');
                 contentDiv.classList.add('grid-cell-content');
-                cell.appendChild(contentDiv);
                 
+                // ALWAYS set text content to prevent layout shifts
+                // Use the actual value if occupied, otherwise use '3' as placeholder
                 if (board[i] !== null) {
-                    cell.classList.add('occupied', `player-${board[i].player}`);
                     contentDiv.textContent = board[i].value;
+                    cell.classList.add('occupied', `player-${board[i].player}`);
+                    contentDiv.classList.remove('transparent-content');
                 } else {
-                    cell.addEventListener('click', showNumberPopup);
+                    contentDiv.textContent = '3'; // Always render '3' as placeholder
+                    cell.classList.remove('occupied', 'player-1', 'player-2');
+                    contentDiv.classList.add('transparent-content');
                 }
+                
+                cell.appendChild(contentDiv);
+                cell.addEventListener('click', showNumberPopup);
                 gridEl.appendChild(cell);
             }
         }
 
         function startTimer() {
-            stopTimer(); // Clear any existing timer
+            stopTimer(); 
             startTime = Date.now();
             timerInterval = setInterval(updateTimerDisplay, 1000);
-            updateTimerDisplay(); // Initial display
+            updateTimerDisplay();
         }
 
         function stopTimer() {
@@ -312,46 +368,53 @@
                 timerDisplay.textContent = formattedTime;
             }
         }
-        
+
         function showNumberPopup(event) {
             const cell = event.target.closest('.grid-cell');
-            if (board[cell.dataset.index] !== null) {
-                return;
-            }
-
             event.stopPropagation();
             selectedCellIndex = parseInt(cell.dataset.index);
-            
-            popupButtons.forEach(button => {
-                const value = button.dataset.value;
-                button.disabled = players[currentPlayer].numbers[value] <= 0;
-            });
+            const currentCellState = board[selectedCellIndex];
 
+            // Position Popup
             numberPopup.classList.add('popup-visible');
 
             const cellRect = cell.getBoundingClientRect();
             const popupRect = numberPopup.getBoundingClientRect();
-            
-            let popupLeft = cellRect.left + cellRect.width / 2;
+
+            let popupLeft = cellRect.left + cellRect.width / 2 - popupRect.width / 2;
             let popupTop = cellRect.top + cellRect.height / 2 - popupRect.height / 2;
-            
+
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            
-            if (popupLeft < 0) {
-                popupLeft = 0;
-            } else if (popupLeft + popupRect.width > viewportWidth) {
-                popupLeft = viewportWidth - popupRect.width;
-            }
 
-            if (popupTop < 0) {
-                popupTop = 0;
-            } else if (popupTop + popupRect.height > viewportHeight) {
-                popupTop = viewportHeight - popupRect.height;
-            }
-            
+            // Adjust to keep fully visible
+            if (popupLeft < 5) popupLeft = 5;
+            else if (popupLeft + popupRect.width > viewportWidth - 5) popupLeft = viewportWidth - popupRect.width - 5;
+
+            if (popupTop < 5) popupTop = 5;
+            else if (popupTop + popupRect.height > viewportHeight - 5) popupTop = viewportHeight - popupRect.height - 5;
+
             numberPopup.style.left = `${popupLeft}px`;
             numberPopup.style.top = `${popupTop}px`;
+
+
+            // Enable/Disable Buttons based on inventory
+            popupButtons.forEach(button => {
+                const newValue = button.dataset.value;
+                const newPlayer = parseInt(button.dataset.player);
+
+                let count = players[newPlayer].numbers[newValue];
+
+                // If the selected move is replacing the existing piece with the SAME piece,
+                // the inventory count will temporarily be +1 higher than shown.
+                const isSamePiece = currentCellState && currentCellState.player === newPlayer && currentCellState.value == newValue;
+
+                if (count > 0 || isSamePiece) {
+                     button.disabled = false;
+                } else {
+                     button.disabled = true;
+                }
+            });
         }
 
         function hideNumberPopup() {
@@ -359,33 +422,74 @@
             selectedCellIndex = null;
         }
 
-        function placeNumber(value, index) {
+        function placeNumber(newPlayer, newValue, index) {
             if (isFirstMove) {
                 startTimer();
                 isFirstMove = false;
             }
 
-            history.push({ 
-                board: JSON.parse(JSON.stringify(board)), 
-                players: JSON.parse(JSON.stringify(players)), 
-                currentPlayer: currentPlayer 
+            const currentCellState = board[index];
+            const newValueStr = newValue.toString();
+
+            // Check if placing the exact same piece (no change in state or inventory needed)
+            const isSamePiece = currentCellState && currentCellState.player === newPlayer && currentCellState.value == newValueStr;
+            if (isSamePiece) {
+                return;
+            }
+
+            // --- Inventory Management Start ---
+
+            // 1. Record history (State BEFORE the move)
+            history.push({
+                board: JSON.parse(JSON.stringify(board)),
+                players: JSON.parse(JSON.stringify(players)),
             });
 
-            board[index] = { value: parseInt(value), player: currentPlayer };
-            players[currentPlayer].numbers[value]--;
+            // 2. REFUND the old piece (if editing)
+            if (currentCellState !== null) {
+                const oldPlayer = currentCellState.player;
+                const oldValue = currentCellState.value.toString();
+                players[oldPlayer].numbers[oldValue]++;
+            }
 
-            calculateScores();
+            // 3. DEDUCT the new piece
+            players[newPlayer].numbers[newValueStr]--;
 
-            currentPlayer = currentPlayer === 1 ? 2 : 1;
-            selectedCellIndex = null;
-            
-            renderGrid();
-            updateUI();
-            checkGameOver();
+            // 4. CHECK INVENTORY for negative count (invalid move)
+            if (players[newPlayer].numbers[newValueStr] >= 0) {
+                // Placement is valid!
+
+                // 5. Update the board
+                board[index] = { value: parseInt(newValueStr), player: newPlayer };
+
+                calculateScores();
+                selectedCellIndex = null;
+
+                renderGrid();
+                updateUI();
+                checkGameOver();
+
+            } else {
+                // Invalid placement (ran out of numbers)
+
+                // 6. REVERSE the deduction and refund to restore state
+                players[newPlayer].numbers[newValueStr]++; // Reverse deduction
+                if (currentCellState !== null) {
+                    const oldPlayer = currentCellState.player;
+                    const oldValue = currentCellState.value.toString();
+                    players[oldPlayer].numbers[oldValue]--; // Reverse refund
+                }
+
+                // Remove the last (failed) history entry
+                history.pop();
+
+                // Re-render and show message with inventory counts fixed
+                renderGrid();
+                updateUI();
+            }
         }
 
         function updateUI() {
-            statusEl.textContent = `${playerNames[currentPlayer]}'s turn`;
             document.getElementById(`p1-1s`).textContent = players[1].numbers['1'];
             document.getElementById(`p1-2s`).textContent = players[1].numbers['2'];
             document.getElementById(`p1-3s`).textContent = players[1].numbers['3'];
@@ -395,41 +499,39 @@
             document.getElementById(`p1-score`).textContent = players[1].score;
             document.getElementById(`p2-score`).textContent = players[2].score;
             document.getElementById('total-score').textContent = players[1].score + players[2].score;
-
-            if (currentPlayer === 1) {
-                player1Card.classList.add('active');
-                player2Card.classList.remove('active');
-            } else {
-                player2Card.classList.add('active');
-                player1Card.classList.remove('active');
-            }
         }
-        
-        function resetGame() {
-            currentPlayer = 1;
+
+        function resetGame(showMsg = true) {
             selectedCellIndex = null;
             board = Array(gridSize * gridSize).fill(null);
-            history = [];
 
-            // Adjusted numbers based on grid size
+            // Adjusted initial counts based on grid size
             if (gridSize === 7) {
-                players = {
-                    1: { numbers: { '1': 8, '2': 8, '3': 8 }, score: 0 },
-                    2: { numbers: { '1': 8, '2': 8, '3': 8 }, score: 0 }
-                };
+                initialPlayerCounts = { '1': 8, '2': 8, '3': 8 };
             } else {
-                players = {
-                    1: { numbers: { '1': 4, '2': 4, '3': 4 }, score: 0 },
-                    2: { numbers: { '1': 4, '2': 4, '3': 4 }, score: 0 }
-                };
+                initialPlayerCounts = { '1': 4, '2': 4, '3': 4 };
             }
-            
+
+            players = {
+                1: { numbers: JSON.parse(JSON.stringify(initialPlayerCounts)), score: 0 },
+                2: { numbers: JSON.parse(JSON.stringify(initialPlayerCounts)), score: 0 }
+            };
+
+            // Reset history to contain only the initial state
+            history = [];
+            history.push({
+                board: JSON.parse(JSON.stringify(board)),
+                players: JSON.parse(JSON.stringify(players)),
+            });
+
             renderGrid();
             updateUI();
-            stopTimer(); // Stop the timer when the game is reset
-            isFirstMove = true; // Reset the flag
-            timerDisplay.textContent = '00:00'; // Reset timer display
-            showMessage("Game has been reset.");
+            stopTimer();
+            isFirstMove = true;
+            timerDisplay.textContent = '00:00';
+            
+            // Reset the Total Score title
+            totalScoreTitleEl.textContent = 'Total Score';
         }
 
         function toggleGridSize() {
@@ -462,6 +564,7 @@
                             const neighborValue = board[neighborIndex] ? board[neighborIndex].value : 0;
                             tileScore += Math.max(0, cell.value - neighborValue);
                         } else {
+                            // Border cell penalty is calculated against a value of 0
                             tileScore += Math.max(0, cell.value - 0);
                         }
                     });
@@ -472,46 +575,60 @@
         }
 
         function undo() {
-            if (history.length > 0) {
-                const lastState = history.pop();
-                board = lastState.board;
-                players = lastState.players;
-                currentPlayer = lastState.currentPlayer;
-                selectedCellIndex = null;
+            if (history.length > 1) {
+                // Pop the current state (the one created by the last valid move)
+                history.pop();
+
+                // Load the previous state
+                const lastState = history[history.length - 1];
+
+                board = JSON.parse(JSON.stringify(lastState.board));
+                players = JSON.parse(JSON.stringify(lastState.players));
+
+                calculateScores();
                 renderGrid();
                 updateUI();
-                showMessage("Move undone.");
-            } else {
-                showMessage("Cannot undo further.");
+                
+                if (history.length === 1) {
+                    stopTimer();
+                    isFirstMove = true;
+                    timerDisplay.textContent = '00:00';
+                }
+                
+                // Clear any game over status on the total score card
+                totalScoreTitleEl.textContent = 'Total Score';
+
+            } else if (history.length === 1) {
+                // If only the initial state is left, reset the game fully
+                resetGame(false);
             }
         }
 
         function checkGameOver() {
             const occupiedCells = board.filter(cell => cell !== null).length;
-            if (occupiedCells === (gridSize * gridSize) - 1) { // Corrected logic here
+            const totalCells = gridSize * gridSize;
+
+            // Game over when there is one tile empty
+            if (occupiedCells === totalCells - 1) {
                 stopTimer();
                 const p1Score = players[1].score;
                 const p2Score = players[2].score;
                 const finalTime = timerDisplay.textContent;
                 let winnerMessage = "";
+
                 if (p1Score > p2Score) {
-                    winnerMessage = `Game Over! White wins with a score of ${p1Score}! Final time: ${finalTime}.`;
+                    winnerMessage = `Game Over! White wins (${p1Score} vs ${p2Score}). Time: ${finalTime}.`;
                 } else if (p2Score > p1Score) {
-                    winnerMessage = `Game Over! Black wins with a score of ${p2Score}! Final time: ${finalTime}.`;
+                    winnerMessage = `Game Over! Black wins (${p2Score} vs ${p1Score}). Time: ${finalTime}.`;
                 } else {
-                    winnerMessage = `Game Over! It's a tie with a score of ${p1Score}! Final time: ${finalTime}.`;
+                    winnerMessage = `Game Over! It's a tie (${p1Score} each). Time: ${finalTime}.`;
                 }
-                showMessage(winnerMessage);
+
+                // Display the game over message in the Total Score Card title
+                totalScoreTitleEl.textContent = winnerMessage;
             }
         }
-        
-        function showMessage(text) {
-            messageBox.textContent = text;
-            messageBox.classList.remove('hidden');
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000);
-        }
+
     </script>
 </body>
 </html>
