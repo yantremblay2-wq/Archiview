@@ -230,11 +230,24 @@
             }
             
             .game-container {
-                padding: 1rem;
+                padding: 0.75rem;
+                max-width: 100%;
             }
             
             .game-grid {
+                width: 100%;
                 max-width: 100%;
+                padding: 6px;
+                gap: 6px;
+                margin: 1rem auto;
+            }
+            
+            .grid-cell {
+                min-height: 40px;
+            }
+            
+            .grid-cell-content {
+                font-size: 1.25rem;
             }
         }
     </style>
@@ -362,11 +375,16 @@
             gridEl.innerHTML = '';
             gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             
-            // Adjust max-width based on grid size
-            if (gridSize === 7) {
-                gridEl.style.maxWidth = '550px';
+            // Adjust max-width based on grid size (only on desktop)
+            if (window.innerWidth > 640) {
+                if (gridSize === 7) {
+                    gridEl.style.maxWidth = '550px';
+                } else {
+                    gridEl.style.maxWidth = '450px';
+                }
             } else {
-                gridEl.style.maxWidth = '450px';
+                // On mobile, always use 100%
+                gridEl.style.maxWidth = '100%';
             }
 
             for (let i = 0; i < gridSize * gridSize; i++) {
